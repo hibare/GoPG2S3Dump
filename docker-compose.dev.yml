@@ -1,0 +1,34 @@
+version: "3.7"
+
+services:
+  postgres:
+    image: postgres:alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: john0123456789
+    volumes:
+      - ./_volumes/postgresql:/var/lib/postgresql/data
+      - ./sql/create-databases.sql:/docker-entrypoint-initdb.d/create_databases.sql
+    ports:
+      - 127.0.0.1:5432:5432
+    restart: always
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 30s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "500k"
+        max-file: "5"
+
+  db_export:
+    build: .
+    container_name: db_export
+    volumes:
+      - ./:/src
+      - ./etc:/etc/gopg2s3dump
+    tty: true       
