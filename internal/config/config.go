@@ -34,7 +34,6 @@ type BackupConfig struct {
 	RetentionCount int    `yaml:"retention-count" mapstructure:"retention-count"`
 	DateTimeLayout string `yaml:"date-time-layout" mapstructure:"date-time-layout"`
 	Cron           string `yaml:"cron" mapstructure:"cron"`
-	Archive        bool   `yaml:"archive" mapstructure:"archive"`
 }
 
 type DiscordNotifierConfig struct {

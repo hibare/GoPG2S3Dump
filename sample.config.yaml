@@ -1,0 +1,20 @@
+postgres:
+    host: ""
+    port: ""
+    user: ""
+    password: ""
+s3:
+    endpoint: ""
+    region: ""
+    access-key: ""
+    secret-key: ""
+    bucket: ""
+    prefix: ""
+backup:
+    retention-count: 
+    cron: ""
+notifiers:
+    enabled: 
+    discord:
+        enabled: 
+        webhook: ""

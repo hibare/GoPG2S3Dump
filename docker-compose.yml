@@ -1,0 +1,22 @@
+version: '3.9'
+
+services:
+  gopg2s3dump:
+    image: hibare/gopg2s3dump
+    container_name: gopg2s3dump
+    hostname: gopg2s3dump
+    volumes:
+      -  ./data/gopg2s3dump:/etc/gopg2s3dump
+    networks:
+      - db
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "500k"
+        max-file: "5"
+
+networks:
+  db:
+    name: db
+    external: true
+    driver: overlay
