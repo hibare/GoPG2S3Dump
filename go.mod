@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/aws/aws-sdk-go v1.44.294
-	github.com/go-co-op/gocron v1.30.0
+	github.com/go-co-op/gocron v1.30.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.16.0
 	gopkg.in/yaml.v3 v3.0.1
