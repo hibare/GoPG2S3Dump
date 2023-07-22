@@ -2,3 +2,4 @@ _volumes/*
 etc/*
 sql/*
 .vscode/*
+dist/*

@@ -9,6 +9,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/hibare/GoCommon/pkg/crypto/gpg"
 	"github.com/hibare/GoPG2S3Dump/internal/config"
 	"github.com/hibare/GoPG2S3Dump/internal/constants"
 	"github.com/hibare/GoPG2S3Dump/internal/file"
@@ -45,6 +46,9 @@ func createBackupDir() error {
 func Dump() (int, string, error) {
 	var totalDatabases int
 	var key string
+	var archivePath string
+	var uploadFilePath string
+	var encryptedFilePath string
 
 	setPGEnvVars()
 
@@ -90,19 +94,40 @@ func Dump() (int, string, error) {
 
 	log.Infof("Exported %d databases", totalDatabases)
 
-	archivePath, err := file.ArchiveDir(BackupLocation)
+	// create an archive of dump directory
+	archivePath, err = file.ArchiveDir(BackupLocation)
 	if err != nil {
 		return totalDatabases, key, err
 	}
 
-	key, err = s3.Upload(archivePath)
+	uploadFilePath = archivePath
+
+	// encrypt backup if encryption is enabled
+	if config.Current.Backup.Encrypt {
+		gpg, err := gpg.DownloadGPGPubKey(config.Current.Encryption.GPG.KeyID, config.Current.Encryption.GPG.KeyServer)
+		if err != nil {
+			log.Warnf("Error downloading gpg key: %s", err)
+			return totalDatabases, key, err
+		}
+
+		encryptedFilePath, err := gpg.EncryptFile(archivePath)
+		if err != nil {
+			log.Warnf("Error encrypting archive file: %s", err)
+			return totalDatabases, key, err
+		}
+
+		uploadFilePath = encryptedFilePath
+	}
+
+	// upload dump archive to S3
+	key, err = s3.Upload(uploadFilePath)
 	if err != nil {
 		return totalDatabases, key, err
 	}
 
-	if err = os.Remove(archivePath); err != nil {
-		return totalDatabases, key, err
-	}
+	// ignore errors
+	os.Remove(archivePath)
+	os.Remove(encryptedFilePath)
 	log.Infof("Removed archive file %s", archivePath)
 
 	return totalDatabases, key, nil

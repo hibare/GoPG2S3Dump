@@ -1,4 +1,4 @@
-version: '3.9'
+version: "3.9"
 
 services:
   postgres:
@@ -14,7 +14,7 @@ services:
       - 127.0.0.1:5432:5432
     restart: always
     healthcheck:
-      test: [ "CMD", "pg_isready" ]
+      test: ["CMD", "pg_isready"]
       interval: 30s
       timeout: 5s
       retries: 30
@@ -28,7 +28,8 @@ services:
   db_export:
     build: .
     container_name: db_export
+    hostname: pg2s3dump
     volumes:
       - ./:/src
-      - ./etc:/etc/gopg2s3dump
-    tty: true       
+      - ./etc/gopg2s3dump:/etc/gopg2s3dump
+    tty: true
