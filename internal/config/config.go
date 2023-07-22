@@ -34,6 +34,16 @@ type BackupConfig struct {
 	RetentionCount int    `yaml:"retention-count" mapstructure:"retention-count"`
 	DateTimeLayout string `yaml:"date-time-layout" mapstructure:"date-time-layout"`
 	Cron           string `yaml:"cron" mapstructure:"cron"`
+	Encrypt        bool   `yaml:"encrypt" mapstructure:"encrypt"`
+}
+
+type GPGConfig struct {
+	KeyServer string `yaml:"key-server" mapstructure:"key-server"`
+	KeyID     string `yaml:"key-id" mapstructure:"key-id"`
+}
+
+type Encryption struct {
+	GPG GPGConfig
 }
 
 type DiscordNotifierConfig struct {
@@ -47,10 +57,11 @@ type NotifiersConfig struct {
 }
 
 type Config struct {
-	Postgres  PostgresConfig  `yaml:"postgres" mapstructure:"postgres"`
-	S3        S3Config        `yaml:"s3" mapstructure:"s3"`
-	Backup    BackupConfig    `yaml:"backup" mapstructure:"backup"`
-	Notifiers NotifiersConfig `yaml:"notifiers" mapstructure:"notifiers"`
+	Postgres   PostgresConfig  `yaml:"postgres" mapstructure:"postgres"`
+	S3         S3Config        `yaml:"s3" mapstructure:"s3"`
+	Backup     BackupConfig    `yaml:"backup" mapstructure:"backup"`
+	Encryption Encryption      `yaml:"encryption" mapstructure:"encryption"`
+	Notifiers  NotifiersConfig `yaml:"notifiers" mapstructure:"notifiers"`
 }
 
 var Current *Config
@@ -89,6 +100,13 @@ func LoadConfig() {
 	if Current.Backup.Cron == "" {
 		log.Warnf("Schedule is not set, using default: %s", constants.DefaultCron)
 		Current.Backup.Cron = constants.DefaultCron
+	}
+
+	// Check if encryption is enabled & encryption config is enabled
+	if Current.Backup.Encrypt {
+		if Current.Encryption.GPG.KeyServer == "" || Current.Encryption.GPG.KeyID == "" {
+			log.Fatalf("Error backup encryption is enabled but encryption config is not set")
+		}
 	}
 
 	Current.Backup.Hostname = utils.GetHostname()

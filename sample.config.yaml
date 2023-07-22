@@ -11,10 +11,15 @@ s3:
     bucket: ""
     prefix: ""
 backup:
-    retention-count: 
+    retention-count: "" 
     cron: ""
+    encrypt: ""
+encryption:
+    gpg:
+        key-server: ""
+        key-id: ""
 notifiers:
-    enabled: 
+    enabled: ""
     discord:
-        enabled: 
+        enabled: ""
         webhook: ""
