@@ -3,7 +3,7 @@ module github.com/hibare/GoPG2S3Dump
 go 1.20
 
 require (
-	github.com/aws/aws-sdk-go v1.44.316
+	github.com/aws/aws-sdk-go v1.44.317
 	github.com/go-co-op/gocron v1.31.0
 	github.com/hibare/GoCommon v0.5.0
 	github.com/sirupsen/logrus v1.9.3
