@@ -9,12 +9,12 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/hibare/GoCommon/pkg/crypto/gpg"
+	"github.com/hibare/GoCommon/v2/pkg/crypto/gpg"
+	"github.com/hibare/GoCommon/v2/pkg/datetime"
+	"github.com/hibare/GoCommon/v2/pkg/file"
+	commonS3 "github.com/hibare/GoCommon/v2/pkg/s3"
 	"github.com/hibare/GoPG2S3Dump/internal/config"
 	"github.com/hibare/GoPG2S3Dump/internal/constants"
-	"github.com/hibare/GoPG2S3Dump/internal/file"
-	"github.com/hibare/GoPG2S3Dump/internal/s3"
-	"github.com/hibare/GoPG2S3Dump/internal/utils"
 )
 
 var BackupLocation = filepath.Join(os.TempDir(), constants.ExportDir)
@@ -26,7 +26,7 @@ func setPGEnvVars() {
 	os.Setenv("PGPORT", config.Current.Postgres.Port)
 }
 
-func createBackupDir() error {
+func setupBackupDir() error {
 	// Remove existing backupLocation
 	os.RemoveAll(BackupLocation)
 
@@ -43,24 +43,14 @@ func createBackupDir() error {
 	return nil
 }
 
-func Dump() (int, string, error) {
-	var totalDatabases int
-	var key string
-	var archivePath string
-	var uploadFilePath string
-	var encryptedFilePath string
-
-	setPGEnvVars()
-
-	if err := createBackupDir(); err != nil {
-		return totalDatabases, key, err
-	}
+func exportDBs() (int, error) {
+	totalDatabases := 0
 
 	// Get list of all databases
 	cmd := exec.Command("psql", "-l", "-t")
 	output, err := cmd.Output()
 	if err != nil {
-		return totalDatabases, key, fmt.Errorf("error getting list of databases: %s", err)
+		return totalDatabases, fmt.Errorf("error getting list of databases: %s", err)
 	}
 
 	databases := []string{}
@@ -76,28 +66,52 @@ func Dump() (int, string, error) {
 			}
 		}
 	}
-	totalDatabases = len(databases)
 
-	log.Infof("Exporting %d databases to %s", totalDatabases, BackupLocation)
 	// Loop through databases and dump each one to a .sql file
 	for _, db := range databases {
 		log.Infof("Processing database: %s", db)
 
 		// Dump database to .sql file
 		cmd := exec.Command("pg_dump", "--no-owner", "--no-acl", "--dbname="+db, "--file="+db+".sql")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
 			log.Warnf("Error dumping database: %s, %s", db, err)
 			continue
 		}
+		totalDatabases = totalDatabases + 1
 		log.Infof("Successfully dumped database: %s", db)
 	}
 
 	log.Infof("Exported %d databases", totalDatabases)
 
-	// create an archive of dump directory
-	archivePath, err = file.ArchiveDir(BackupLocation)
+	return totalDatabases, nil
+}
+
+func Dump() (int, string, error) {
+	var totalDatabases int
+	var archivePath string
+	var uploadFilePath string
+
+	setPGEnvVars()
+
+	if err := setupBackupDir(); err != nil {
+		return totalDatabases, "", err
+	}
+
+	totalDatabases, err := exportDBs()
 	if err != nil {
-		return totalDatabases, key, err
+		return totalDatabases, "", err
+	}
+
+	if totalDatabases <= 0 {
+		return totalDatabases, "", fmt.Errorf("no databases to export")
+	}
+
+	// create an archive of dump directory
+	archivePath, _, _, _, err = file.ArchiveDir(BackupLocation)
+	if err != nil {
+		return totalDatabases, "", err
 	}
 
 	uploadFilePath = archivePath
@@ -107,33 +121,56 @@ func Dump() (int, string, error) {
 		gpg, err := gpg.DownloadGPGPubKey(config.Current.Encryption.GPG.KeyID, config.Current.Encryption.GPG.KeyServer)
 		if err != nil {
 			log.Warnf("Error downloading gpg key: %s", err)
-			return totalDatabases, key, err
+			return totalDatabases, "", err
 		}
 
 		encryptedFilePath, err := gpg.EncryptFile(archivePath)
 		if err != nil {
 			log.Warnf("Error encrypting archive file: %s", err)
-			return totalDatabases, key, err
+			return totalDatabases, "", err
 		}
 
 		uploadFilePath = encryptedFilePath
 	}
 
-	// upload dump archive to S3
-	key, err = s3.Upload(uploadFilePath)
-	if err != nil {
-		return totalDatabases, key, err
+	s3 := commonS3.S3{
+		Endpoint:  config.Current.S3.Endpoint,
+		Region:    config.Current.S3.Region,
+		AccessKey: config.Current.S3.AccessKey,
+		SecretKey: config.Current.S3.SecretKey,
+		Bucket:    config.Current.S3.Bucket,
+	}
+	s3.SetPrefix(config.Current.S3.Prefix, config.Current.Backup.Hostname, true)
+
+	if err := s3.NewSession(); err != nil {
+		return totalDatabases, "", err
 	}
 
-	// ignore errors
-	os.Remove(archivePath)
-	os.Remove(encryptedFilePath)
-	log.Infof("Removed archive file %s", archivePath)
+	// upload dump archive to S3
+	key, err := s3.UploadFile(uploadFilePath)
+	if err != nil {
+		return totalDatabases, "", err
+	}
+
+	log.Infof("Backup uploaded at %s", key)
 
 	return totalDatabases, key, nil
 }
 
 func ListDumps() ([]string, error) {
+	s3 := commonS3.S3{
+		Endpoint:  config.Current.S3.Endpoint,
+		Region:    config.Current.S3.Region,
+		AccessKey: config.Current.S3.AccessKey,
+		SecretKey: config.Current.S3.SecretKey,
+		Bucket:    config.Current.S3.Bucket,
+	}
+	s3.SetPrefix(config.Current.S3.Prefix, config.Current.Backup.Hostname, false)
+
+	if err := s3.NewSession(); err != nil {
+		return []string{}, err
+	}
+
 	keys, err := s3.ListObjectsAtPrefixRoot()
 	if err != nil {
 		return []string{}, err
@@ -148,13 +185,25 @@ func ListDumps() ([]string, error) {
 	keys = s3.TrimPrefix(keys)
 
 	// Sort datetime strings by descending order
-	sortedKeys := utils.SortDateTimes(keys)
+	sortedKeys := datetime.SortDateTimes(keys)
 
 	return sortedKeys, nil
 }
 
 func PurgeDumps() error {
-	prefix := s3.GetPrefix()
+	s3 := commonS3.S3{
+		Endpoint:  config.Current.S3.Endpoint,
+		Region:    config.Current.S3.Region,
+		AccessKey: config.Current.S3.AccessKey,
+		SecretKey: config.Current.S3.SecretKey,
+		Bucket:    config.Current.S3.Bucket,
+	}
+	s3.SetPrefix(config.Current.S3.Prefix, config.Current.Backup.Hostname, false)
+
+	if err := s3.NewSession(); err != nil {
+		return err
+	}
+
 	dumps, err := ListDumps()
 
 	if err != nil {
@@ -172,7 +221,7 @@ func PurgeDumps() error {
 	// Delete datetime keys from S3 exceding retention count
 	for _, key := range keysToDelete {
 		log.Infof("Deleting backup %s", key)
-		key = filepath.Join(prefix, key)
+		key = filepath.Join(s3.Prefix, key)
 
 		if err := s3.DeleteObjects(key, true); err != nil {
 			log.Errorf("Error deleting backup %s: %v", key, err)

@@ -1,16 +1,11 @@
 package config
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
-
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
 
+	commonConfig "github.com/hibare/GoCommon/v2/pkg/config"
+	commonUtils "github.com/hibare/GoCommon/v2/pkg/utils"
 	"github.com/hibare/GoPG2S3Dump/internal/constants"
-	"github.com/hibare/GoPG2S3Dump/internal/utils"
 )
 
 type PostgresConfig struct {
@@ -66,23 +61,14 @@ type Config struct {
 
 var Current *Config
 
+var BC commonConfig.BaseConfig
+
 func LoadConfig() {
-	preCheckConfigPath()
-
-	viper.AddConfigPath(constants.ConfigDir)
-	viper.SetConfigName(constants.ConfigFilename)
-	viper.SetConfigType(constants.ConfigFileExtension)
-
-	// Load the configuration file
-	err := viper.ReadInConfig()
+	current, err := BC.ReadYAMLConfig(Current)
 	if err != nil {
 		log.Fatalf("Error reading config file: %v", err)
 	}
-
-	// Unmarshal the configuration file into a struct
-	if err := viper.Unmarshal(&Current); err != nil {
-		log.Fatalf("Error parsing YAML data: %v", err)
-	}
+	Current = current.(*Config)
 
 	// Set default DateTimeLayout if missing
 	if Current.Backup.DateTimeLayout == "" {
@@ -109,50 +95,33 @@ func LoadConfig() {
 		}
 	}
 
-	Current.Backup.Hostname = utils.GetHostname()
-}
-
-func GetConfigFilePath(configRootDir string) string {
-	return filepath.Join(configRootDir, fmt.Sprintf("%s.%s", constants.ConfigFilename, constants.ConfigFileExtension))
-}
-
-func preCheckConfigPath() {
-	configRootDir := constants.ConfigDir
-	configPath := GetConfigFilePath(configRootDir)
-
-	if info, err := os.Stat(configRootDir); os.IsNotExist(err) {
-		log.Warnf("Config directory does not exist, creating: %s", configRootDir)
-		if err := os.MkdirAll(configRootDir, 0755); err != nil {
-			log.Fatalf("Error creating config directory: %v", err)
-			return
-		}
-	} else if !info.IsDir() {
-		log.Fatalf("Config directory is not a directory: %s", configRootDir)
-		return
+	// Disable notifier if webhook is empty
+	if Current.Notifiers.Discord.Webhook == "" {
+		log.Warn("Discord notifier is disabled")
+		Current.Notifiers.Discord.Enabled = false
 	}
 
-	if info, err := os.Stat(configPath); os.IsNotExist(err) {
-		log.Warnf("Config file does not exist, creating: %s", configPath)
-		file, err := os.Create(configPath)
-		if err != nil {
-			log.Fatalf("Error creating config file: %v", err)
-			return
-		}
-		defer file.Close()
+	Current.Backup.Hostname = commonUtils.GetHostname()
+}
 
-		// Marshal empty config
-		yamlBytes, err := yaml.Marshal(Config{})
-		if err != nil {
-			log.Fatalf("Error marshaling config: %v", err)
-		}
+func InitConfig() error {
+	if Current == nil {
+		Current = &Config{}
+	}
 
-		// Write the YAML output to a file
-		if _, err := file.Write(yamlBytes); err != nil {
-			log.Fatalf("Error writing config file: %v", err)
-		}
+	if err := BC.WriteYAMLConfig(Current); err != nil {
+		return err
+	}
 
-	} else if info.IsDir() {
-		log.Fatalf("Expected file, found directory: %s", configPath)
-		return
+	return nil
+}
+
+func init() {
+	BC = commonConfig.BaseConfig{
+		ProgramIdentifier: constants.ProgramIdentifier,
+		OS:                commonConfig.ActualOS{},
+	}
+	if err := BC.Init(); err != nil {
+		panic(err)
 	}
 }
