@@ -1,59 +1,48 @@
 package notifiers
 
 import (
+	"errors"
+
 	"github.com/hibare/GoPG2S3Dump/internal/config"
 	log "github.com/sirupsen/logrus"
 )
 
-func BackupSuccessfulNotification(databases int, key string) {
+var (
+	ErrNotifiersDisabled = errors.New("notifiers are disabled")
+	ErrNotifierDisabled  = errors.New("notifier is disabled")
+)
 
+func runPreChecks() error {
 	if !config.Current.Notifiers.Enabled {
-		log.Warn("Notifiers are disabled")
-		return
+		return ErrNotifiersDisabled
 	}
 
-	if config.Current.Notifiers.Discord.Webhook != "" && !config.Current.Notifiers.Discord.Enabled {
-		log.Warning("Discord notifier not enabled")
-		return
-	} else if config.Current.Notifiers.Discord.Enabled {
-		if err := DiscordBackupSuccessfulNotification(config.Current.Notifiers.Discord.Webhook, config.Current.Backup.Hostname, databases, key); err != nil {
-			log.Errorf("Error sending Discord notification: %v", err)
-		}
-	}
-
+	return nil
 }
 
-func BackupFailedNotification(err string) {
-
-	if !config.Current.Notifiers.Enabled {
-		log.Warn("Notifiers are disabled")
+func NotifyBackupSuccess(databases int, key string) {
+	if err := runPreChecks(); err != nil {
+		log.Error(err)
 		return
 	}
 
-	if config.Current.Notifiers.Discord.Webhook != "" && !config.Current.Notifiers.Discord.Enabled {
-		log.Warning("Discord notifier not enabled")
-		return
-	} else if config.Current.Notifiers.Discord.Enabled {
-		if err := DiscordBackupFailedNotification(config.Current.Notifiers.Discord.Webhook, config.Current.Backup.Hostname, err); err != nil {
-			log.Errorf("Error sending Discord notification: %v", err)
-		}
-	}
-
+	discordNotifyBackupSuccess(databases, key)
 }
 
-func BackupDeletionFailureNotification(err string) {
-
-	if !config.Current.Notifiers.Enabled {
-		log.Warn("Notifiers are disabled")
+func NotifyBackupFailure(err error) {
+	if err := runPreChecks(); err != nil {
+		log.Error(err)
 		return
 	}
 
-	if config.Current.Notifiers.Discord.Webhook != "" && !config.Current.Notifiers.Discord.Enabled {
-		log.Warning("Discord notifier not enabled")
+	discordNotifyBackupFailure(err)
+}
+
+func NotifyBackupDeleteFailure(err error) {
+	if err := runPreChecks(); err != nil {
+		log.Error(err)
 		return
-	} else if config.Current.Notifiers.Discord.Enabled {
-		if err := DiscordBackupDeletionFailureNotification(config.Current.Notifiers.Discord.Webhook, config.Current.Backup.Hostname, err); err != nil {
-			log.Errorf("Error sending Discord notification: %v", err)
-		}
 	}
+
+	discordNotifyBackupDeleteFailure(err)
 }
