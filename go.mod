@@ -3,14 +3,14 @@ module github.com/hibare/GoPG2S3Dump
 go 1.20
 
 require (
-	github.com/go-co-op/gocron v1.31.1
+	github.com/go-co-op/gocron v1.31.2
 	github.com/hibare/GoCommon/v2 v2.2.0
 	github.com/sirupsen/logrus v1.9.3
 )
 
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230717121422-5aa5874ade95 // indirect
-	github.com/aws/aws-sdk-go v1.44.323 // indirect
+	github.com/aws/aws-sdk-go v1.44.327 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
