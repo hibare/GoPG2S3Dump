@@ -10,6 +10,11 @@ updates:
     target-branch: "dev"
     assignees:
       - "hibare"
+    groups:
+      actions:
+        patterns:
+          - "*"
+
 
   # Maintain dependencies for Go mods
   - package-ecosystem: "gomod"
@@ -24,6 +29,11 @@ updates:
     allow:
       # Allow only direct updates for
       - dependency-type: "direct"
+    groups:
+      go:
+        patterns:
+          - "*"
+
 
   # Maintain version for Docker
   - package-ecosystem: "docker"
@@ -35,3 +45,7 @@ updates:
     target-branch: "dev"
     assignees:
       - "hibare"
+    groups:
+      docker:
+        patterns:
+          - "*"
