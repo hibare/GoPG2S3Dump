@@ -3,7 +3,7 @@ module github.com/hibare/GoPG2S3Dump
 go 1.20
 
 require (
-	github.com/go-co-op/gocron v1.35.3
+	github.com/go-co-op/gocron v1.36.0
 	github.com/hibare/GoCommon/v2 v2.5.0
 	github.com/sirupsen/logrus v1.9.3
 )
