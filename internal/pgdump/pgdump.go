@@ -109,7 +109,7 @@ func Dump() (int, string, error) {
 	}
 
 	// create an archive of dump directory
-	archivePath, _, _, _, err = file.ArchiveDir(BackupLocation)
+	archivePath, _, _, _, err = file.ArchiveDir(BackupLocation, nil)
 	if err != nil {
 		return totalDatabases, "", err
 	}
