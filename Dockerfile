@@ -1,4 +1,6 @@
-FROM golang:1.22.1-alpine AS builder
+ARG GOLANG_VERSION
+
+FROM golang:${GOLANG_VERSION}-alpine AS base
 
 WORKDIR /src/
 
