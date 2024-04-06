@@ -1,6 +1,6 @@
 module github.com/hibare/GoPG2S3Dump
 
-go 1.20
+go 1.21
 
 require (
 	github.com/go-co-op/gocron v1.37.0
