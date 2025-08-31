@@ -6,7 +6,6 @@
 <div align="center">
 
 [![Go Version](https://img.shields.io/badge/Go-1.24.4+-blue.svg)](https://golang.org)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://hub.docker.com/r/hibare/stashly)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hibare/stashly)](https://goreportcard.com/report/github.com/hibare/stashly)
 [![Docker Hub](https://img.shields.io/docker/pulls/hibare/stashly)](https://hub.docker.com/r/hibare/stashly)
