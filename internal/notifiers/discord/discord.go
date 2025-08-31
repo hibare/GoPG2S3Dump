@@ -49,10 +49,10 @@ func (d *Discord) NotifyBackupSuccess(_ context.Context, databases int, key stri
 		},
 		Components: []discord.Component{},
 		Username:   constants.ProgramIdentifier,
-		Content:    fmt.Sprintf("**PG-DB Backup Successful** - *%s*", config.Current.App.InstanceID),
+		Content:    fmt.Sprintf("**PG-DB Backup Successful** - *%s*", d.Cfg.App.InstanceID),
 	}
 
-	return message.Send(config.Current.Notifiers.Discord.Webhook)
+	return message.Send(d.Cfg.Notifiers.Discord.Webhook)
 }
 
 // NotifyBackupFailure sends a failure notification to the Discord channel.
@@ -67,10 +67,10 @@ func (d *Discord) NotifyBackupFailure(_ context.Context, err error) error {
 		},
 		Components: []discord.Component{},
 		Username:   constants.ProgramIdentifier,
-		Content:    fmt.Sprintf("**PG-DB Backup Failed** - *%s*", config.Current.App.InstanceID),
+		Content:    fmt.Sprintf("**PG-DB Backup Failed** - *%s*", d.Cfg.App.InstanceID),
 	}
 
-	return message.Send(config.Current.Notifiers.Discord.Webhook)
+	return message.Send(d.Cfg.Notifiers.Discord.Webhook)
 }
 
 // NotifyBackupDeleteFailure sends a deletion failure notification to the Discord channel.
@@ -85,8 +85,8 @@ func (d *Discord) NotifyBackupDeleteFailure(_ context.Context, err error) error 
 		},
 		Components: []discord.Component{},
 		Username:   constants.ProgramIdentifier,
-		Content:    fmt.Sprintf("**PG-DB Backup Deletion Failed** - *%s*", config.Current.App.InstanceID),
+		Content:    fmt.Sprintf("**PG-DB Backup Deletion Failed** - *%s*", d.Cfg.App.InstanceID),
 	}
 
-	return message.Send(config.Current.Notifiers.Discord.Webhook)
+	return message.Send(d.Cfg.Notifiers.Discord.Webhook)
 }
