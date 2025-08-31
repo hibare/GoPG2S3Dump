@@ -16,4 +16,10 @@ const (
 
 	//  DefaultCron is the default cron schedule for backups (daily at midnight).
 	DefaultCron = "0 0 * * *"
+
+	// DefaultPostgresHost is the default host for the postgres database.
+	DefaultPostgresHost = "127.0.0.1"
+
+	// DefaultPostgresPort is the default port for the postgres database.
+	DefaultPostgresPort = "5432"
 )

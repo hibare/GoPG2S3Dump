@@ -41,13 +41,7 @@ clean: ## Clean up
 
 .PHONY: test
 test: ## Run tests
-ifndef GITHUB_ACTIONS
-	$(MAKE) pg-up
-endif
 	go test ./... -cover
-ifndef GITHUB_ACTIONS
-	$(MAKE) pg-down
-endif
 
 .PHONY: help
 help: ## Display this help
