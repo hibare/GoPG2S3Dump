@@ -110,12 +110,14 @@ func TestDumpster_CreateDump_Success(t *testing.T) {
 	mockExec.On("Command", mock.Anything, "psql", mock.Anything).Return(mockCmd)
 	mockCmd.On("WithEnv", mock.Anything).Return(mockCmd)
 	mockCmd.On("WithDir", dumpster.backupLocation).Return(mockCmd)
+	mockCmd.On("WithStderr", os.Stderr).Return(mockCmd)
 	mockCmd.On("Output").Return([]byte("db1\n"), nil)
 
 	// Mock successful pg_dump
 	mockExec.On("Command", mock.Anything, "pg_dump", mock.Anything).Return(mockCmd)
 	mockCmd.On("WithEnv", mock.Anything).Return(mockCmd)
 	mockCmd.On("WithDir", dumpster.backupLocation).Return(mockCmd)
+	mockCmd.On("WithStderr", os.Stderr).Return(mockCmd)
 	mockCmd.On("CombinedOutput").Return([]byte(""), nil)
 
 	// Mock successful storage upload
@@ -155,6 +157,7 @@ func TestDumpster_CreateDump_NoDatabasesExported(t *testing.T) {
 	mockExec.On("Command", mock.Anything, "psql", mock.Anything).Return(mockCmd)
 	mockCmd.On("WithEnv", mock.Anything).Return(mockCmd)
 	mockCmd.On("WithDir", dumpster.backupLocation).Return(mockCmd)
+	mockCmd.On("WithStderr", os.Stderr).Return(mockCmd)
 	mockCmd.On("Output").Return([]byte(""), nil)
 
 	resp, err := dumpster.CreateDump(context.Background())
@@ -187,12 +190,14 @@ func TestDumpster_CreateDump_PgDumpError(t *testing.T) {
 	mockExec.On("Command", mock.Anything, "psql", mock.Anything).Return(mockCmd)
 	mockCmd.On("WithEnv", mock.Anything).Return(mockCmd)
 	mockCmd.On("WithDir", dumpster.backupLocation).Return(mockCmd)
+	mockCmd.On("WithStderr", os.Stderr).Return(mockCmd)
 	mockCmd.On("Output").Return([]byte("db1\n"), nil)
 
 	// Mock failed pg_dump
 	mockExec.On("Command", mock.Anything, "pg_dump", mock.Anything).Return(mockCmd)
 	mockCmd.On("WithEnv", mock.Anything).Return(mockCmd)
 	mockCmd.On("WithDir", dumpster.backupLocation).Return(mockCmd)
+	mockCmd.On("WithStderr", os.Stderr).Return(mockCmd)
 	mockCmd.On("CombinedOutput").Return([]byte("permission denied"), errors.New("access denied"))
 
 	resp, err := dumpster.CreateDump(context.Background())
@@ -362,12 +367,14 @@ func TestDumpster_Dump_Success(t *testing.T) {
 	mockExec.On("Command", mock.Anything, "psql", mock.Anything).Return(mockCmd)
 	mockCmd.On("WithEnv", mock.Anything).Return(mockCmd)
 	mockCmd.On("WithDir", dumpster.backupLocation).Return(mockCmd)
+	mockCmd.On("WithStderr", os.Stderr).Return(mockCmd)
 	mockCmd.On("Output").Return([]byte("db1\n"), nil)
 
 	// Mock successful pg_dump
 	mockExec.On("Command", mock.Anything, "pg_dump", mock.Anything).Return(mockCmd)
 	mockCmd.On("WithEnv", mock.Anything).Return(mockCmd)
 	mockCmd.On("WithDir", dumpster.backupLocation).Return(mockCmd)
+	mockCmd.On("WithStderr", os.Stderr).Return(mockCmd)
 	mockCmd.On("CombinedOutput").Return([]byte(""), nil)
 
 	// Mock successful storage upload
@@ -434,6 +441,7 @@ func TestDumpster_Dump_PurgeError(t *testing.T) {
 	mockExec.On("Command", mock.Anything, "psql", mock.Anything).Return(mockCmd)
 	mockCmd.On("WithEnv", mock.Anything).Return(mockCmd)
 	mockCmd.On("WithDir", dumpster.backupLocation).Return(mockCmd)
+	mockCmd.On("WithStderr", os.Stderr).Return(mockCmd)
 	mockCmd.On("Output").Return([]byte("db1\n"), nil)
 
 	// Mock successful pg_dump

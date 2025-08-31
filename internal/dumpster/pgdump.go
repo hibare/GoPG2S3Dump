@@ -85,6 +85,7 @@ func (d *Dumpster) export(ctx context.Context) (*exportResponse, error) {
 	output, err := d.exec.Command(ctx, "psql", "-At", "-c", query).
 		WithEnv(envVars).
 		WithDir(d.backupLocation).
+		WithStderr(os.Stderr).
 		Output()
 
 	if err != nil {
