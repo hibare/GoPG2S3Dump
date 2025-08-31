@@ -2,16 +2,14 @@ version: "3.9"
 
 services:
   postgres:
-    image: postgres:14-alpine
+    image: postgres:16-alpine
     container_name: postgres
     environment:
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: john0123456789
+      POSTGRES_PASSWORD: admin123
     volumes:
-      - ./_volumes/postgresql:/var/lib/postgresql/data
-      - ./sql/create-databases.sql:/docker-entrypoint-initdb.d/create_databases.sql
-    ports:
-      - 127.0.0.1:5432:5432
+      - ./testhelpers/pg-init/01-create-dbs.sql:/docker-entrypoint-initdb.d/01-create-dbs.sql
+    network_mode: host
     restart: always
     healthcheck:
       test: ["CMD", "pg_isready"]
@@ -19,17 +17,44 @@ services:
       timeout: 5s
       retries: 30
       start_period: 10s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "500k"
-        max-file: "5"
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123
+    network_mode: host # 9000 for API, 9001 for console
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  create-buckets:
+    image: minio/mc
+    network_mode: host
+    depends_on:
+      - minio
+    restart: on-failure
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      /usr/bin/mc alias set minio http://127.0.0.1:9000 admin admin123;
+      /usr/bin/mc mb minio/stashly;
+      exit 0;
+      "
 
   db_export:
     build: .
     container_name: db_export
-    hostname: pg2s3dump
+    hostname: stashly
+    network_mode: host
     volumes:
       - ./:/src
-      - ./etc/gopg2s3dump:/etc/gopg2s3dump
     tty: true
+    depends_on:
+      - postgres
+      - minio

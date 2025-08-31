@@ -14,20 +14,26 @@ NC=\033[0m
 
 .DEFAULT_GOAL := help
 
-.PHONY: pg-up
-pg-up: ## Start Postgres
-	${DOCKER_COMPOSE_PREFIX} up -d postgres
-	@echo "Waiting for POstgres to become healthy..."
-	@until docker exec postgres pg_isready > /dev/null 2>&1; do \
-		sleep 1; \
-		echo "Postgres is not healthy yet, retrying..."; \
-	done
-	@printf "Postgres is now healthy!\n\n"
+.PHONY: init
+init: ## Initialize the project
+	$(MAKE) install-golangci-lint
+	$(MAKE) install-pre-commit
 
-.PHONY: pg-down
-pg-down: ## Stop Postgres
-	${DOCKER_COMPOSE_PREFIX} rm -fsv postgres
-	
+.PHONY: install-golangci-lint
+install-golangci-lint: ## Install golangci-lint
+ifeq (, $(shell which golangci-lint))
+	@echo "Installing golangci-lint..."
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin
+endif
+
+.PHONY: install-pre-commit
+install-pre-commit: ## Install pre-commit
+	pre-commit install
+
+.PHONY: dev
+dev: ## Start development environment
+	${DOCKER_COMPOSE_PREFIX} up postgres minio create-buckets
+
 .PHONY: clean
 clean: ## Clean up
 	${DOCKER_COMPOSE_PREFIX} down
@@ -44,5 +50,5 @@ ifndef GITHUB_ACTIONS
 endif
 
 .PHONY: help
-help: ## Disply this help
+help: ## Display this help
 		@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(BCYAN)%-18s$(NC)%s\n", $$1, $$2}'

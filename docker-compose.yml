@@ -1,12 +1,12 @@
-version: '3.9'
+version: "3.9"
 
 services:
-  gopg2s3dump:
-    image: hibare/gopg2s3dump
-    container_name: gopg2s3dump
-    hostname: gopg2s3dump
+  stashly:
+    image: hibare/stashly
+    container_name: stashly
+    hostname: stashly
     volumes:
-      -  ./data/gopg2s3dump:/etc/gopg2s3dump
+      - ./data/stashly:/etc/stashly
     networks:
       - db
     logging:
