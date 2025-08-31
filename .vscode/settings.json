@@ -8,8 +8,15 @@
     "ui.semanticTokens": true
   },
   "cSpell.words": [
+    "gocron",
+    "golangci",
     "gomod",
+    "healthcheck",
     "hibare",
-    "mapstructure"
+    "Iface",
+    "mapstructure",
+    "psql",
+    "stashly",
+    "testhelpers"
   ]
 }

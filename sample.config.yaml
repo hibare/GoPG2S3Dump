@@ -1,25 +1,28 @@
 postgres:
-    host: ""
-    port: ""
-    user: ""
-    password: ""
+  host: ""
+  port: ""
+  user: ""
+  password: ""
 s3:
-    endpoint: ""
-    region: ""
-    access-key: ""
-    secret-key: ""
-    bucket: ""
-    prefix: ""
+  endpoint: ""
+  region: ""
+  access-key: ""
+  secret-key: ""
+  bucket: ""
+  prefix: ""
 backup:
-    retention-count: "" 
-    cron: ""
-    encrypt: ""
+  retention-count: ""
+  cron: ""
+  encrypt: ""
 encryption:
-    gpg:
-        key-server: ""
-        key-id: ""
+  gpg:
+    key-server: ""
+    key-id: ""
 notifiers:
+  enabled: ""
+  discord:
     enabled: ""
-    discord:
-        enabled: ""
-        webhook: ""
+    webhook: ""
+logger:
+  level: ""
+  mode: ""
